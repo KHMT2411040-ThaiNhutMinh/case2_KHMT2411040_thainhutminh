@@ -7,6 +7,10 @@ dotenv.config();
 const app = express();
 
 app.use(express.json());
+const taskRoutes =
+  require('./routes/task.routes');
+
+app.use('/api/tasks', taskRoutes);
 
 mongoose
   .connect(process.env.MONGODB_URI)
