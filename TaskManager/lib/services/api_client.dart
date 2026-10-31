@@ -5,7 +5,8 @@ import '../utils/constants.dart';
 
 class ApiException implements Exception {
   final String message;
-  ApiException(this.message);
+  final int? statusCode;
+  ApiException(this.message, {this.statusCode});
   @override
   String toString() => message;
 }
@@ -57,6 +58,7 @@ class ApiClient {
         : <String, dynamic>{};
 
     if (res.statusCode >= 200 && res.statusCode < 300) return data;
-    throw ApiException(data['message']?.toString() ?? 'Có lỗi xảy ra');
+    throw ApiException( data['message']?.toString() ?? 'Có lỗi xảy ra',
+      statusCode: res.statusCode,);
   }
 }
