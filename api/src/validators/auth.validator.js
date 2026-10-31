@@ -17,3 +17,7 @@ exports.updateProfileRules = [
     .isURL()
     .withMessage('Đường dẫn ảnh không hợp lệ'),
 ];
+exports.changePasswordRules = [
+  body('currentPassword').notEmpty().withMessage('Vui lòng nhập mật khẩu hiện tại'),
+  body('newPassword').isLength({ min: 6 }).withMessage('Mật khẩu mới tối thiểu 6 ký tự'),
+];
