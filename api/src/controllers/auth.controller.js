@@ -24,3 +24,20 @@ exports.register = async (req, res) => {
     user,
   });
 };
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({ email: email.toLowerCase() });
+  const ok = user && (await bcrypt.compare(password, user.passwordHash));
+
+  // Cùng một thông báo cho cả "sai email" và "sai mật khẩu"
+  if (!ok) {
+    return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng' });
+  }
+
+  res.json({
+    message: 'Đăng nhập thành công',
+    token: signToken(user),
+    user,
+  });
+};
