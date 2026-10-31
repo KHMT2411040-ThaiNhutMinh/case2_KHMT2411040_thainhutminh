@@ -9,3 +9,11 @@ exports.loginRules = [
   body('email').trim().isEmail().withMessage('Email không hợp lệ'),
   body('password').notEmpty().withMessage('Vui lòng nhập mật khẩu'),
 ];
+exports.updateProfileRules = [
+  body('fullName').trim().notEmpty().withMessage('Họ tên không được để trống'),
+  body('avatarUrl')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isURL()
+    .withMessage('Đường dẫn ảnh không hợp lệ'),
+];

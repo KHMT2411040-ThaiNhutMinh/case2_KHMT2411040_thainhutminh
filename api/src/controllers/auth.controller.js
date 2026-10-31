@@ -44,3 +44,12 @@ exports.login = async (req, res) => {
 exports.getMe = async (req, res) => {
   res.json({ user: req.user });
 };
+exports.updateMe = async (req, res) => {
+  const { fullName, avatarUrl } = req.body;
+
+  req.user.fullName = fullName;
+  if (avatarUrl !== undefined) req.user.avatarUrl = avatarUrl;
+  await req.user.save();
+
+  res.json({ message: 'Cập nhật thông tin thành công', user: req.user });
+};
