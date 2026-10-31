@@ -41,3 +41,6 @@ exports.login = async (req, res) => {
     user,
   });
 };
+exports.getMe = async (req, res) => {
+  res.json({ user: req.user });
+};
