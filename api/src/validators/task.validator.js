@@ -3,10 +3,10 @@ const { body } = require('express-validator');
 const PRIORITIES = ['low', 'medium', 'high'];
 const STATUSES = ['todo', 'in_progress', 'completed'];
 
-const common = [
+const info = [
+  body('title').trim().notEmpty().withMessage('Tên công việc không được để trống'),
   body('description').optional().isString().withMessage('Mô tả không hợp lệ'),
   body('priority').optional().isIn(PRIORITIES).withMessage('Mức ưu tiên không hợp lệ'),
-  body('status').optional().isIn(STATUSES).withMessage('Trạng thái không hợp lệ'),
   body('startDate')
     .optional({ values: 'null' })
     .isISO8601()
@@ -23,12 +23,19 @@ const common = [
   }),
 ];
 
+// POST /tasks (trạng thái ban đầu là tùy chọn)
 exports.createTaskRules = [
-  body('title').trim().notEmpty().withMessage('Tên công việc không được để trống'),
-  ...common,
+  ...info,
+  body('status').optional().isIn(STATUSES).withMessage('Trạng thái không hợp lệ'),
 ];
 
-exports.updateTaskRules = [
-  body('title').optional().trim().notEmpty().withMessage('Tên công việc không được để trống'),
-  ...common,
+// PUT /tasks/:id (không đổi trạng thái ở đây)
+exports.updateTaskRules = info;
+
+// PATCH /tasks/:id/status
+exports.statusRules = [
+  body('status').isIn(STATUSES).withMessage('Trạng thái không hợp lệ'),
 ];
+
+exports.PRIORITIES = PRIORITIES;
+exports.STATUSES = STATUSES;

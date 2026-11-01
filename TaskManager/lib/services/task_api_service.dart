@@ -16,7 +16,13 @@ class TaskApiService {
   }
 
   Future<void> updateTask(String id, Map<String, dynamic> data) async {
-    await ApiClient.request('PATCH', '/tasks/$id', body: data, auth: true);
+    final status = data['status'];
+    final info = Map<String, dynamic>.from(data)..remove('status');
+    await ApiClient.request('PUT', '/tasks/$id', body: info, auth: true);
+    if (status != null) {
+      await ApiClient.request('PATCH', '/tasks/$id/status',
+          body: {'status': status}, auth: true);
+    }
   }
 
   Future<void> deleteTask(String id) async {
