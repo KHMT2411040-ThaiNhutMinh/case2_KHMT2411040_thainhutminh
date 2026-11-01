@@ -9,3 +9,9 @@ const priorityLabels = {
   'medium': 'Trung bình',
   'high': 'Cao',
 };
+
+const sortLabels = {
+  'createdAt': 'Mới tạo nhất',
+  'dueDate': 'Hạn gần nhất',
+  'priority': 'Ưu tiên cao trước',
+};
