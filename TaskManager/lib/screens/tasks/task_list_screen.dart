@@ -4,6 +4,7 @@ import '../../services/api_client.dart';
 import '../../services/auth_service.dart';
 import '../../models/task.dart';
 import '../../services/task_api_service.dart';
+import '../../utils/task_labels.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -62,9 +63,9 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'Completed':
+      case 'completed':
         return Colors.green;
-      case 'InProgress':
+      case 'in_progress':
         return Colors.orange;
       default:
         return Colors.grey;
@@ -72,10 +73,10 @@ class _TaskListScreenState extends State<TaskListScreen> {
   }
 
   Color _priorityColor(String priority) {
-    switch (priority) {
-      case 'High':
+   switch (priority) {
+      case 'high':
         return Colors.red;
-      case 'Low':
+      case 'low':
         return Colors.green;
       default:
         return Colors.amber;
@@ -162,13 +163,13 @@ class _TaskListScreenState extends State<TaskListScreen> {
               children: [
                 if (task.description.isNotEmpty) Text(task.description),
                 const SizedBox(height: 6),
-                Wrap(
+                                Wrap(
                   spacing: 6,
                   children: [
-                    if (task.category.isNotEmpty)
-                      _buildTag(task.category, Colors.blue),
-                    _buildTag(task.priority, _priorityColor(task.priority)),
-                    _buildTag(task.status, _statusColor(task.status)),
+                    _buildTag(priorityLabels[task.priority] ?? task.priority,
+                        _priorityColor(task.priority)),
+                    _buildTag(statusLabels[task.status] ?? task.status,
+                        _statusColor(task.status)),
                   ],
                 ),
               ],

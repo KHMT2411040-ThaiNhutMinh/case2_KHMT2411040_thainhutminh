@@ -3,6 +3,7 @@ import '../../models/task.dart';
 import '../../services/api_client.dart';
 import '../../services/auth_service.dart';
 import '../../services/task_api_service.dart';
+import '../../utils/task_labels.dart';
 
 class TaskDetailScreen extends StatefulWidget {
   final String taskId;
@@ -48,7 +49,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   }
 
   String _date(DateTime? d) => d == null
-      ? 'Chưa đặt hạn'
+      ? 'Chưa đặt'
       : '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
   Widget _row(IconData icon, String label, String value) => ListTile(
@@ -81,10 +82,12 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    _row(Icons.notes, 'Mô tả', _task!.description),
-                    _row(Icons.folder, 'Nhóm', _task!.category),
-                    _row(Icons.flag, 'Mức ưu tiên', _task!.priority),
-                    _row(Icons.timelapse, 'Trạng thái', _task!.status),
+                                        _row(Icons.notes, 'Mô tả', _task!.description),
+                    _row(Icons.flag, 'Mức ưu tiên',
+                        priorityLabels[_task!.priority] ?? _task!.priority),
+                    _row(Icons.timelapse, 'Trạng thái',
+                        statusLabels[_task!.status] ?? _task!.status),
+                    _row(Icons.play_arrow, 'Ngày bắt đầu', _date(_task!.startDate)),
                     _row(Icons.event, 'Hạn hoàn thành', _date(_task!.dueDate)),
                   ],
                 ),
