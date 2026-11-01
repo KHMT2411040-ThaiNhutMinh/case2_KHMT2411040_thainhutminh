@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'task_detail_screen.dart';
 import '../../services/api_client.dart';
 import '../../services/auth_service.dart';
 import '../../models/task.dart';
@@ -144,6 +145,14 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
         return Card(
           child: ListTile(
+             onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TaskDetailScreen(taskId: task.id),
+                ),
+              );
+            },
             title: Text(
               task.title,
               style: const TextStyle(fontWeight: FontWeight.bold),
