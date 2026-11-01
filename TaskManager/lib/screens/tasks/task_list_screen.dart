@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../models/task.dart';
 import '../../services/task_api_service.dart';
 import '../../utils/task_labels.dart';
+import 'task_form_screen.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -61,6 +62,15 @@ class _TaskListScreenState extends State<TaskListScreen> {
     }
   }
 
+  // Bước 4b: mở form thêm công việc, thêm xong thì tải lại danh sách
+  Future<void> _addTask() async {
+    final created = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const TaskFormScreen()),
+    );
+    if (created == true && mounted) _loadTasks();
+  }
+
   Color _statusColor(String status) {
     switch (status) {
       case 'completed':
@@ -73,7 +83,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
   }
 
   Color _priorityColor(String priority) {
-   switch (priority) {
+    switch (priority) {
       case 'high':
         return Colors.red;
       case 'low':
@@ -146,13 +156,16 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
         return Card(
           child: ListTile(
-             onTap: () {
-              Navigator.push(
+            // Bước 4c: quay về từ màn hình chi tiết thì tải lại danh sách
+            onTap: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => TaskDetailScreen(taskId: task.id),
                 ),
               );
+              if (!mounted) return;
+              _loadTasks();
             },
             title: Text(
               task.title,
@@ -163,7 +176,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
               children: [
                 if (task.description.isNotEmpty) Text(task.description),
                 const SizedBox(height: 6),
-                                Wrap(
+                Wrap(
                   spacing: 6,
                   children: [
                     _buildTag(priorityLabels[task.priority] ?? task.priority,
@@ -192,6 +205,12 @@ class _TaskListScreenState extends State<TaskListScreen> {
             tooltip: 'Tải lại',
           ),
         ],
+      ),
+      // Bước 4d: nút + để thêm công việc
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addTask,
+        tooltip: 'Thêm công việc',
+        child: const Icon(Icons.add),
       ),
       body: _buildBody(),
     );

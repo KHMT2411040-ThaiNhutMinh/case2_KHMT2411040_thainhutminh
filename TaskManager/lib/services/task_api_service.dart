@@ -11,4 +11,15 @@ class TaskApiService {
     final data = await ApiClient.request('GET', '/tasks/$id', auth: true);
     return Task.fromJson(data);
   }
+    Future<void> createTask(Map<String, dynamic> data) async {
+    await ApiClient.request('POST', '/tasks', body: data, auth: true);
+  }
+
+  Future<void> updateTask(String id, Map<String, dynamic> data) async {
+    await ApiClient.request('PATCH', '/tasks/$id', body: data, auth: true);
+  }
+
+  Future<void> deleteTask(String id) async {
+    await ApiClient.request('DELETE', '/tasks/$id', auth: true);
+  }
 }
