@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import '../../services/api_client.dart';
+import '../../services/auth_service.dart';
 import '../../models/task.dart';
 import '../../services/task_api_service.dart';
 
@@ -31,18 +32,28 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
     try {
       final tasks = await _apiService.getTasks();
-
       if (!mounted) return;
-
       setState(() {
         _tasks = tasks;
         _isLoading = false;
       });
+    } on ApiException catch (e) {
+      if (e.statusCode == 401) {
+        // Token hết hạn hoặc không hợp lệ: quay về đăng nhập
+        await AuthService.logout();
+        if (!mounted) return;
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
+        return;
+      }
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.message;
+        _isLoading = false;
+      });
     } catch (e) {
       if (!mounted) return;
-
       setState(() {
-        _errorMessage = 'Không thể kết nối đến server.\n$e';
+        _errorMessage = 'Có lỗi xảy ra: $e';
         _isLoading = false;
       });
     }

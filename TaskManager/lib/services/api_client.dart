@@ -29,7 +29,7 @@ class ApiClient {
     await prefs.remove(_tokenKey);
   }
 
-  static Future<Map<String, dynamic>> request(
+  static Future<dynamic> _send(
     String method,
     String path, {
     Map<String, dynamic>? body,
@@ -53,12 +53,27 @@ class ApiClient {
       throw ApiException('Không kết nối được máy chủ. Hãy kiểm tra server đang chạy.');
     }
 
-    final data = res.body.isNotEmpty
-        ? jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>
-        : <String, dynamic>{};
+    final data = res.body.isNotEmpty ? jsonDecode(utf8.decode(res.bodyBytes)) : null;
 
     if (res.statusCode >= 200 && res.statusCode < 300) return data;
-    throw ApiException( data['message']?.toString() ?? 'Có lỗi xảy ra',
-      statusCode: res.statusCode,);
+    final msg = data is Map ? data['message']?.toString() : null;
+    throw ApiException(msg ?? 'Có lỗi xảy ra', statusCode: res.statusCode);
+  }
+
+  // Phản hồi là một đối tượng JSON
+  static Future<Map<String, dynamic>> request(
+    String method,
+    String path, {
+    Map<String, dynamic>? body,
+    bool auth = false,
+  }) async {
+    final data = await _send(method, path, body: body, auth: auth);
+    return (data as Map<String, dynamic>?) ?? <String, dynamic>{};
+  }
+
+  // Phản hồi là một mảng JSON (ví dụ danh sách công việc)
+  static Future<List<dynamic>> requestList(String path, {bool auth = true}) async {
+    final data = await _send('GET', path, auth: auth);
+    return (data as List<dynamic>?) ?? <dynamic>[];
   }
 }

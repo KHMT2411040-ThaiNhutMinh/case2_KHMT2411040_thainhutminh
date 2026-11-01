@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
-import 'screens/profile/profile_screen.dart';
+import 'screens/home_screen.dart';
 import 'services/auth_service.dart';
 
 void main() {
@@ -21,13 +21,13 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
-        '/home': (_) => const ProfileScreen(),
+        '/home': (_) => const HomeScreen(),
       },
     );
   }
 }
 
-// Mở app: có token thì vào thẳng màn hình chính, chưa có thì ra đăng nhập
+// Mở app: có token thì vào màn hình chính, chưa có thì ra đăng nhập
 class _StartGate extends StatelessWidget {
   const _StartGate();
 
@@ -39,7 +39,7 @@ class _StartGate extends StatelessWidget {
         if (!snap.hasData) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
-        return snap.data! ? const ProfileScreen() : const LoginScreen();
+        return snap.data! ? const HomeScreen() : const LoginScreen();
       },
     );
   }
