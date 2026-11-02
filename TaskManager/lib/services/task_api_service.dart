@@ -1,17 +1,20 @@
 import '../models/task.dart';
+import '../models/task_extra.dart';
 import 'api_client.dart';
 
 class TaskApiService {
-    Future<List<Task>> getTasks({
+  Future<List<Task>> getTasks({
     String? q,
     String? status,
     String? priority,
+    String? role,
     String? sort,
   }) async {
     final params = <String, String>{};
     if (q != null && q.trim().isNotEmpty) params['q'] = q.trim();
     if (status != null) params['status'] = status;
     if (priority != null) params['priority'] = priority;
+    if (role != null) params['role'] = role;
     if (sort != null) params['sort'] = sort;
 
     final path = Uri(
@@ -27,7 +30,8 @@ class TaskApiService {
     final data = await ApiClient.request('GET', '/tasks/$id', auth: true);
     return Task.fromJson(data);
   }
-    Future<void> createTask(Map<String, dynamic> data) async {
+
+  Future<void> createTask(Map<String, dynamic> data) async {
     await ApiClient.request('POST', '/tasks', body: data, auth: true);
   }
 
@@ -43,5 +47,39 @@ class TaskApiService {
 
   Future<void> deleteTask(String id) async {
     await ApiClient.request('DELETE', '/tasks/$id', auth: true);
+  }
+
+  // ===== 4 hàm mới =====
+
+  Future<List<AssigneeInfo>> getAssignees(String taskId) async {
+    final list = await ApiClient.requestList('/tasks/$taskId/assignees');
+    return list
+        .map((e) => AssigneeInfo.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<ShareInfo>> getShares(String taskId) async {
+    final list = await ApiClient.requestList('/tasks/$taskId/shares');
+    return list
+        .map((e) => ShareInfo.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<ActivityInfo>> getActivities(String taskId,
+      {int limit = 10}) async {
+    final list =
+        await ApiClient.requestList('/tasks/$taskId/activities?limit=$limit');
+    return list
+        .map((e) => ActivityInfo.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> changeStatus(String taskId, String status) async {
+    await ApiClient.request(
+      'PATCH',
+      '/tasks/$taskId/status',
+      body: {'status': status},
+      auth: true,
+    );
   }
 }

@@ -27,12 +27,14 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
   String? _statusFilter;
   String? _priorityFilter;
+  String? _roleFilter;
   String _sort = 'createdAt';
 
   bool get _hasFilter =>
       _searchCtrl.text.trim().isNotEmpty ||
       _statusFilter != null ||
-      _priorityFilter != null;
+      _priorityFilter != null ||
+      _roleFilter != null;
 
   @override
   void initState() {
@@ -59,6 +61,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
         q: _searchCtrl.text,
         status: _statusFilter,
         priority: _priorityFilter,
+        role: _roleFilter,
         sort: _sort,
       );
       if (!mounted || id != _requestId) return;
@@ -100,6 +103,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
       _searchCtrl.clear();
       _statusFilter = null;
       _priorityFilter = null;
+      _roleFilter = null;
     });
     _loadTasks();
   }
@@ -180,6 +184,40 @@ class _TaskListScreenState extends State<TaskListScreen> {
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       child: Column(
         children: [
+          // Hàng chip phân loại theo vai trò
+          SizedBox(
+            height: 40,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: const Text('Tất cả'),
+                    selected: _roleFilter == null,
+                    onSelected: (_) {
+                      setState(() => _roleFilter = null);
+                      _loadTasks();
+                    },
+                  ),
+                ),
+                ...roleFilterLabels.entries.map(
+                  (e) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(e.value),
+                      selected: _roleFilter == e.key,
+                      onSelected: (_) {
+                        setState(() => _roleFilter = e.key);
+                        _loadTasks();
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
           TextField(
             controller: _searchCtrl,
             onChanged: _onSearchChanged,
@@ -322,6 +360,10 @@ class _TaskListScreenState extends State<TaskListScreen> {
                         _priorityColor(task.priority)),
                     _buildTag(statusLabels[task.status] ?? task.status,
                         _statusColor(task.status)),
+                    if (task.access.role != null)
+                      _buildTag(
+                          roleLabels[task.access.role] ?? task.access.role!,
+                          Colors.blue),
                   ],
                 ),
               ],
