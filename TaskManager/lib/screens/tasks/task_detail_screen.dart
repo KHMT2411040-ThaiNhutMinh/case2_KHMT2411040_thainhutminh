@@ -6,6 +6,8 @@ import '../../services/auth_service.dart';
 import '../../services/task_api_service.dart';
 import '../../utils/task_labels.dart';
 import 'task_form_screen.dart';
+import '../assignment/assign_task_screen.dart';
+import '../sharing/task_sharing_screen.dart';
 
 class TaskDetailScreen extends StatefulWidget {
   final String taskId;
@@ -51,11 +53,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     }
     try {
       final t = await _service.getTask(widget.taskId);
-      final (assignees, shares, activities) = await (
-        _safe(_service.getAssignees(widget.taskId)),
-        _safe(_service.getShares(widget.taskId)),
-        _safe(_service.getActivities(widget.taskId)),
-      ).wait;
+      final assignees = await _safe(_service.getAssignees(widget.taskId));
+      final shares = await _safe(_service.getShares(widget.taskId));
+      final activities = await _safe(_service.getActivities(widget.taskId));
       if (!mounted) return;
       setState(() {
         _task = t;
@@ -115,6 +115,24 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     }
   }
 
+  Future<void> _openAssign() async {
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+          builder: (_) => AssignTaskScreen(taskId: widget.taskId)),
+    );
+    if (changed == true && mounted) _load(silent: true);
+  }
+
+  Future<void> _openSharing() async {
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+          builder: (_) => TaskSharingScreen(taskId: widget.taskId)),
+    );
+    if (changed == true && mounted) _load(silent: true);
+  }
+
   Future<void> _changeStatus(String? status) async {
     if (status == null || _task == null || status == _task!.status) return;
     try {
@@ -128,13 +146,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     }
   }
 
-  String _date(DateTime? d) => d == null
-      ? 'Chưa đặt'
-      : '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  String _two(int n) => n.toString().padLeft(2, '0');
+
+  String _date(DateTime? d) =>
+      d == null ? 'Chưa đặt' : '${_two(d.day)}/${_two(d.month)}/${d.year}';
 
   String _dateTime(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')} '
-      '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+      '${_two(d.day)}/${_two(d.month)} ${_two(d.hour)}:${_two(d.minute)}';
 
   Widget _row(IconData icon, String label, String value) => ListTile(
         leading: Icon(icon),
@@ -171,8 +189,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
   Widget _statusField(Task t) {
     if (!t.access.canChangeStatus) {
-      return _row(Icons.timelapse, 'Trạng thái',
-          statusLabels[t.status] ?? t.status);
+      return _row(
+          Icons.timelapse, 'Trạng thái', statusLabels[t.status] ?? t.status);
     }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -203,7 +221,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             style: const TextStyle(color: Colors.blue)),
         const SizedBox(height: 8),
         _row(Icons.notes, 'Mô tả', t.description),
-        _row(Icons.flag, 'Mức ưu tiên', priorityLabels[t.priority] ?? t.priority),
+        _row(Icons.flag, 'Mức ưu tiên',
+            priorityLabels[t.priority] ?? t.priority),
         _statusField(t),
         _row(Icons.play_arrow, 'Ngày bắt đầu', _date(t.startDate)),
         _row(Icons.event, 'Hạn hoàn thành', _date(t.dueDate)),
@@ -217,8 +236,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             _personTile(a.user, tag: a.isPrimary ? 'Phụ trách chính' : null)),
         _section('Người được chia sẻ (${_shares.length})'),
         if (_shares.isEmpty) _empty('Chưa chia sẻ cho ai'),
-        ..._shares.map((s) =>
-            _personTile(s.user, tag: permissionLabels[s.permission])),
+        ..._shares.map(
+            (s) => _personTile(s.user, tag: permissionLabels[s.permission])),
         _section('Lịch sử hoạt động'),
         if (_activities.isEmpty) _empty('Chưa có hoạt động nào'),
         ..._activities.map(
@@ -243,6 +262,16 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         actions: t == null
             ? null
             : [
+                if (t.access.canManage)
+                  IconButton(
+                      icon: const Icon(Icons.person_add_alt),
+                      tooltip: 'Giao việc',
+                      onPressed: _openAssign),
+                if (t.access.canManage)
+                  IconButton(
+                      icon: const Icon(Icons.share),
+                      tooltip: 'Chia sẻ',
+                      onPressed: _openSharing),
                 if (t.access.canEditInfo)
                   IconButton(
                       icon: const Icon(Icons.edit),

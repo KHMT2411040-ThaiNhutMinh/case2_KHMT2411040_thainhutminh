@@ -82,4 +82,39 @@ class TaskApiService {
       auth: true,
     );
   }
+    // ===== Giao việc =====
+
+  Future<void> assign(String taskId, List<String> userIds) async {
+    await ApiClient.request('POST', '/tasks/$taskId/assignees',
+        body: {'userIds': userIds}, auth: true);
+  }
+
+  Future<void> setPrimary(String taskId, String userId, bool isPrimary) async {
+    await ApiClient.request('PATCH', '/tasks/$taskId/assignees/$userId',
+        body: {'isPrimary': isPrimary}, auth: true);
+  }
+
+  Future<void> unassign(String taskId, String userId) async {
+    await ApiClient.request('DELETE', '/tasks/$taskId/assignees/$userId',
+        auth: true);
+  }
+
+  // ===== Chia sẻ =====
+
+  Future<void> share(
+      String taskId, List<String> userIds, String permission) async {
+    await ApiClient.request('POST', '/tasks/$taskId/shares',
+        body: {'userIds': userIds, 'permission': permission}, auth: true);
+  }
+
+  Future<void> changeSharePermission(
+      String taskId, String shareId, String permission) async {
+    await ApiClient.request('PATCH', '/tasks/$taskId/shares/$shareId',
+        body: {'permission': permission}, auth: true);
+  }
+
+  Future<void> revokeShare(String taskId, String shareId) async {
+    await ApiClient.request('DELETE', '/tasks/$taskId/shares/$shareId',
+        auth: true);
+  }
 }

@@ -11,6 +11,8 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+const String _connectErrorMessage = 'Không kết nối được máy chủ.';
+
 class ApiClient {
   static const _tokenKey = 'token';
 
@@ -50,17 +52,18 @@ class ApiClient {
       final streamed = await req.send().timeout(const Duration(seconds: 10));
       res = await http.Response.fromStream(streamed);
     } catch (_) {
-      throw ApiException('Không kết nối được máy chủ. Hãy kiểm tra server đang chạy.');
+      throw ApiException(_connectErrorMessage);
     }
 
-    final data = res.body.isNotEmpty ? jsonDecode(utf8.decode(res.bodyBytes)) : null;
+    final data =
+        res.body.isNotEmpty ? jsonDecode(utf8.decode(res.bodyBytes)) : null;
 
     if (res.statusCode >= 200 && res.statusCode < 300) return data;
     final msg = data is Map ? data['message']?.toString() : null;
     throw ApiException(msg ?? 'Có lỗi xảy ra', statusCode: res.statusCode);
   }
 
-  // Phản hồi là một đối tượng JSON
+  // Phản hồi là một đối tượng JSON (nếu là mảng hoặc rỗng thì trả về map rỗng)
   static Future<Map<String, dynamic>> request(
     String method,
     String path, {
@@ -68,11 +71,12 @@ class ApiClient {
     bool auth = false,
   }) async {
     final data = await _send(method, path, body: body, auth: auth);
-    return (data as Map<String, dynamic>?) ?? <String, dynamic>{};
+    return data is Map<String, dynamic> ? data : <String, dynamic>{};
   }
 
   // Phản hồi là một mảng JSON (ví dụ danh sách công việc)
-  static Future<List<dynamic>> requestList(String path, {bool auth = true}) async {
+  static Future<List<dynamic>> requestList(String path,
+      {bool auth = true}) async {
     final data = await _send('GET', path, auth: auth);
     return (data as List<dynamic>?) ?? <dynamic>[];
   }
