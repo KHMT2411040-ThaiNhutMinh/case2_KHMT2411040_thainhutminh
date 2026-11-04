@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'task_detail_screen.dart';
+import '../notifications/notification_screen.dart';
 import '../../services/api_client.dart';
 import '../../services/auth_service.dart';
+import '../../services/notification_service.dart';
 import '../../models/task.dart';
 import '../../services/task_api_service.dart';
 import '../../utils/task_labels.dart';
@@ -17,13 +19,16 @@ class TaskListScreen extends StatefulWidget {
 
 class _TaskListScreenState extends State<TaskListScreen> {
   final TaskApiService _apiService = TaskApiService();
+  final NotificationService _notifService = NotificationService();
   final TextEditingController _searchCtrl = TextEditingController();
   Timer? _debounce;
+  Timer? _poll;
   int _requestId = 0; // bỏ qua kết quả của lần gọi cũ khi người dùng gõ nhanh
 
   bool _isLoading = true;
   String? _errorMessage;
   List<Task> _tasks = [];
+  int _unread = 0;
 
   String? _statusFilter;
   String? _priorityFilter;
@@ -40,13 +45,27 @@ class _TaskListScreenState extends State<TaskListScreen> {
   void initState() {
     super.initState();
     _loadTasks();
+    _loadUnread();
+    // Hỏi lại số thông báo chưa đọc mỗi 30 giây
+    _poll = Timer.periodic(const Duration(seconds: 30), (_) => _loadUnread());
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _poll?.cancel();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUnread() async {
+    try {
+      final n = await _notifService.unreadCount();
+      if (!mounted) return;
+      setState(() => _unread = n);
+    } catch (_) {
+      // Lỗi phụ, bỏ qua để không làm phiền người dùng
+    }
   }
 
   Future<void> _loadTasks() async {
@@ -114,6 +133,16 @@ class _TaskListScreenState extends State<TaskListScreen> {
       MaterialPageRoute(builder: (_) => const TaskFormScreen()),
     );
     if (created == true && mounted) _loadTasks();
+  }
+
+  Future<void> _openNotifications() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotificationScreen()),
+    );
+    if (!mounted) return;
+    _loadUnread();
+    _loadTasks();
   }
 
   Color _statusColor(String status) {
@@ -343,6 +372,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
               );
               if (!mounted) return;
               _loadTasks();
+              _loadUnread();
             },
             title: Text(
               task.title,
@@ -380,6 +410,15 @@ class _TaskListScreenState extends State<TaskListScreen> {
       appBar: AppBar(
         title: const Text('Danh sách công việc'),
         actions: [
+          IconButton(
+            tooltip: 'Thông báo',
+            icon: Badge.count(
+              count: _unread,
+              isLabelVisible: _unread > 0,
+              child: const Icon(Icons.notifications_outlined),
+            ),
+            onPressed: _openNotifications,
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
             tooltip: 'Sắp xếp',
@@ -398,7 +437,10 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 .toList(),
           ),
           IconButton(
-            onPressed: _loadTasks,
+            onPressed: () {
+              _loadTasks();
+              _loadUnread();
+            },
             icon: const Icon(Icons.refresh),
             tooltip: 'Tải lại',
           ),
