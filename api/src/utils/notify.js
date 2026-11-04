@@ -2,6 +2,7 @@ const Notification = require('../models/notification.model');
 const Task = require('../models/task.model');
 const TaskShare = require('../models/taskShare.model');
 const User = require('../models/user.model');
+const { sendTaskEmails } = require('./mailer');
 
 const STATUS_TEXT = {
   todo: 'Chưa thực hiện',
@@ -9,6 +10,14 @@ const STATUS_TEXT = {
   completed: 'Đã hoàn thành',
 };
 const PERMISSION_TEXT = { viewer: 'chỉ xem', editor: 'chỉnh sửa' };
+
+// Loại sự kiện có gửi email (đổi trạng thái thường chỉ thông báo trong app)
+const EMAIL_TYPES = new Set([
+  'task_assigned',
+  'task_shared',
+  'task_completed',
+  'due_date_changed',
+]);
 
 // Chủ việc + người được giao + người được chia sẻ
 async function participantIds(task) {
@@ -21,7 +30,7 @@ async function participantIds(task) {
   return [...ids];
 }
 
-// Tạo thông báo cho nhiều người, bỏ qua chính người thực hiện
+// Tạo thông báo (và email) cho nhiều người, bỏ qua chính người thực hiện
 async function createMany(userIds, actorId, task, type, title, message) {
   const targets = [...new Set(userIds.map(String))].filter(
     (id) => id !== String(actorId)
@@ -30,6 +39,17 @@ async function createMany(userIds, actorId, task, type, title, message) {
   await Notification.insertMany(
     targets.map((userId) => ({ userId, taskId: task._id, type, title, message }))
   );
+
+  if (EMAIL_TYPES.has(type)) {
+    // Gửi nền, không chờ, để SMTP chậm hay lỗi không ảnh hưởng thao tác chính
+    sendTaskEmails({
+      userIds: targets,
+      taskId: task._id,
+      type,
+      subject: title,
+      text: message,
+    }).catch((err) => console.error('Gửi email thất bại:', err.message));
+  }
 }
 
 async function notifyForActivity(taskId, actorId, action, details = {}) {
