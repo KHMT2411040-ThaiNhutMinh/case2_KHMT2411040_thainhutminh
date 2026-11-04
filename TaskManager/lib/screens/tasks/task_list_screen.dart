@@ -9,6 +9,7 @@ import '../../models/task.dart';
 import '../../services/task_api_service.dart';
 import '../../utils/task_labels.dart';
 import 'task_form_screen.dart';
+import '../statistics/statistics_screen.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -410,6 +411,14 @@ class _TaskListScreenState extends State<TaskListScreen> {
       appBar: AppBar(
         title: const Text('Danh sách công việc'),
         actions: [
+          IconButton(
+            tooltip: 'Thống kê',
+            icon: const Icon(Icons.bar_chart),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+            ),
+          ),
           IconButton(
             tooltip: 'Thông báo',
             icon: Badge.count(
