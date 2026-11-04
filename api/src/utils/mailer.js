@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 const EmailLog = require('../models/emailLog.model');
 const User = require('../models/user.model');
 
+const MAX_ATTEMPTS = 3;
 let transporter = null;
 
 // Chỉ tạo khi đã cấu hình SMTP trong .env
@@ -23,40 +24,51 @@ function getTransporter() {
   return transporter;
 }
 
-async function saveLog(data) {
-  try {
-    await EmailLog.create(data);
-  } catch (err) {
-    console.error('Không ghi được email_logs:', err.message);
+// Thử gửi một email theo bản ghi nhật ký, luôn cập nhật status và attempts
+async function deliver(log) {
+  log.attempts += 1;
+  const mailer = getTransporter();
+  if (!mailer) {
+    log.status = 'failed';
+    log.errorMessage = 'Chưa cấu hình SMTP';
+    await log.save();
+    return log;
   }
+  try {
+    await mailer.sendMail({
+      from: process.env.MAIL_FROM || 'Task Manager <no-reply@taskmanager.local>',
+      to: log.recipientEmail,
+      subject: log.subject,
+      text: `${log.body}\n\nMở ứng dụng Task Manager để xem chi tiết.`,
+    });
+    log.status = 'sent';
+    log.sentAt = new Date();
+    log.errorMessage = '';
+  } catch (err) {
+    log.status = 'failed';
+    log.errorMessage = String(err.message).slice(0, 300);
+  }
+  await log.save();
+  return log;
 }
 
-// Gửi email cho nhiều người, mỗi email ghi một dòng nhật ký. Không bao giờ throw.
+// Tạo nhật ký (pending) rồi gửi cho từng người. Không bao giờ throw ra ngoài.
 async function sendTaskEmails({ userIds, taskId, type, subject, text }) {
   const users = await User.find({ _id: { $in: userIds } });
-  const mailer = getTransporter();
-  const from = process.env.MAIL_FROM || 'Task Manager <no-reply@taskmanager.local>';
-
   await Promise.allSettled(
     users.map(async (u) => {
-      const base = { userId: u._id, taskId, type, to: u.email, subject };
-
-      if (!mailer) {
-        return saveLog({ ...base, status: 'skipped', error: 'Chưa cấu hình SMTP' });
-      }
-      try {
-        await mailer.sendMail({
-          from,
-          to: u.email,
-          subject,
-          text: `${text}\n\nMở ứng dụng Task Manager để xem chi tiết.`,
-        });
-        await saveLog({ ...base, status: 'sent', sentAt: new Date() });
-      } catch (err) {
-        await saveLog({ ...base, status: 'failed', error: String(err.message).slice(0, 300) });
-      }
+      const log = await EmailLog.create({
+        taskId,
+        recipientEmail: u.email,
+        eventType: type,
+        subject,
+        body: text,
+        status: 'pending',
+        attempts: 0,
+      });
+      await deliver(log);
     })
   );
 }
 
-module.exports = { sendTaskEmails };
+module.exports = { sendTaskEmails, deliver, MAX_ATTEMPTS };
