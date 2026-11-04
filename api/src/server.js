@@ -18,6 +18,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/users', require('./routes/user.routes'));
 app.use('/api/notifications', require('./routes/notification.routes'));
 app.use('/api', require('./routes/emailLog.routes'));
+app.use('/api/statistics', require('./routes/statistics.routes'));
 
 mongoose
   .connect(process.env.MONGODB_URI)
