@@ -17,6 +17,7 @@ const EMAIL_TYPES = new Set([
   'task_shared',
   'task_completed',
   'due_date_changed',
+  'due_reminder',
 ]);
 
 // Chủ việc + người được giao + người được chia sẻ
@@ -115,4 +116,4 @@ async function notifyForActivity(taskId, actorId, action, details = {}) {
   }
 }
 
-module.exports = { notifyForActivity };
+module.exports = { notifyForActivity, createMany };

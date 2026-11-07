@@ -18,6 +18,7 @@ Chức năng chính:
 - Thông báo trong ứng dụng (đánh dấu đã đọc, số chưa đọc)
 - Gửi email khi giao việc, chia sẻ, hoàn thành, đổi hạn; ghi nhật ký email; thử gửi lại email thất bại
 - Thống kê công việc theo trạng thái, việc được giao, việc sắp đến hạn và quá hạn
+- Nhắc việc tự động trước hạn (mặc định 24 giờ), cấu hình bằng REMINDER_HOURS và REMINDER_CRON
 
 ## Cấu trúc thư mục
 

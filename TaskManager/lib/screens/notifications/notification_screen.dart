@@ -92,6 +92,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
         return Icons.check_circle;
       case 'due_date_changed':
         return Icons.event;
+      case 'due_reminder':
+        return Icons.alarm;  
       default:
         return Icons.sync;
     }
@@ -103,6 +105,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
         return Colors.green;
       case 'due_date_changed':
         return Colors.orange;
+      case 'due_reminder':
+        return Colors.red;
       default:
         return Colors.blue;
     }
