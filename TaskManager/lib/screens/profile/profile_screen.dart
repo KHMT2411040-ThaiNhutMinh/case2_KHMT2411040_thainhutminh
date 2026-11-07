@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/api_client.dart';
 import '../../services/auth_service.dart';
 import '../../utils/validators.dart';
+import '../statistics/statistics_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -107,7 +108,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextFormField(
                 controller: currentCtrl,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Mật khẩu hiện tại'),
+                decoration:
+                    const InputDecoration(labelText: 'Mật khẩu hiện tại'),
                 validator: (v) => Validators.required(v, 'Mật khẩu hiện tại'),
               ),
               TextFormField(
@@ -150,54 +152,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // Tab "Thông tin": hồ sơ, đổi mật khẩu, đăng xuất
+  Widget _buildInfoTab() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_error!),
+            const SizedBox(height: 12),
+            FilledButton(onPressed: _load, child: const Text('Thử lại')),
+          ],
+        ),
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const CircleAvatar(radius: 40, child: Icon(Icons.person, size: 40)),
+        const SizedBox(height: 16),
+        ListTile(
+          leading: const Icon(Icons.badge),
+          title: const Text('Họ tên'),
+          subtitle: Text(_user!['fullName'] ?? ''),
+          trailing:
+              IconButton(icon: const Icon(Icons.edit), onPressed: _editName),
+        ),
+        ListTile(
+          leading: const Icon(Icons.email),
+          title: const Text('Email'),
+          subtitle: Text(_user!['email'] ?? ''),
+        ),
+        const Divider(),
+        ListTile(
+          leading: const Icon(Icons.lock),
+          title: const Text('Đổi mật khẩu'),
+          onTap: _changePassword,
+        ),
+        ListTile(
+          leading: const Icon(Icons.logout),
+          title: const Text('Đăng xuất'),
+          onTap: _logout,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Cá nhân')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(_error!),
-                      const SizedBox(height: 12),
-                      FilledButton(onPressed: _load, child: const Text('Thử lại')),
-                    ],
-                  ),
-                )
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    const CircleAvatar(
-                        radius: 40, child: Icon(Icons.person, size: 40)),
-                    const SizedBox(height: 16),
-                    ListTile(
-                      leading: const Icon(Icons.badge),
-                      title: const Text('Họ tên'),
-                      subtitle: Text(_user!['fullName'] ?? ''),
-                      trailing: IconButton(
-                          icon: const Icon(Icons.edit), onPressed: _editName),
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.email),
-                      title: const Text('Email'),
-                      subtitle: Text(_user!['email'] ?? ''),
-                    ),
-                    const Divider(),
-                    ListTile(
-                      leading: const Icon(Icons.lock),
-                      title: const Text('Đổi mật khẩu'),
-                      onTap: _changePassword,
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.logout),
-                      title: const Text('Đăng xuất'),
-                      onTap: _logout,
-                    ),
-                  ],
-                ),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Cá nhân'),
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Thông tin'),
+              Tab(text: 'Thống kê'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildInfoTab(),
+            const StatisticsBody(),
+          ],
+        ),
+      ),
     );
   }
 }
