@@ -36,10 +36,14 @@ const norm = (field, v) => {
     : String(v);
 };
 
-// Danh sách: ?q= &status= &priority= &role=created|assigned|shared
-//            &sort=createdAt|dueDate|priority &order=asc|desc
+// Danh sách: ?q= &status= &priority= &scope(role)=created|assigned|shared
+//            &assigneeId= &sortBy(sort)=createdAt|dueDate|priority &order=asc|desc
 router.get('/', async (req, res) => {
-  const { q, status, priority, role, sort, order } = req.query;
+  const { q, status, priority, order } = req.query;
+  // Đề gợi ý scope và sortBy; vẫn nhận tên cũ role và sort
+  const role = req.query.scope || req.query.role;
+  const sort = req.query.sortBy || req.query.sort;
+  const assigneeId = req.query.assigneeId;
   const me = req.user._id;
 
   const shares = await TaskShare.find({ userId: me }).select('taskId permission');
@@ -57,7 +61,10 @@ router.get('/', async (req, res) => {
   }
   if (STATUSES.includes(status)) filter.status = status;
   if (PRIORITIES.includes(priority)) filter.priority = priority;
-
+  // Lọc theo người phụ trách (người được giao)
+  if (typeof assigneeId === 'string' && /^[0-9a-fA-F]{24}$/.test(assigneeId)) {
+    filter.assigneeIds = assigneeId;
+  }
   const tasks = await Task.find(filter);
 
   const sortKey = ['dueDate', 'priority', 'createdAt'].includes(sort) ? sort : 'createdAt';
